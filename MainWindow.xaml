@@ -1,0 +1,1136 @@
+<Window x:Class="InternetMonitor.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+        xmlns:vm="clr-namespace:InternetMonitor.UI.ViewModels"
+        xmlns:converters="clr-namespace:InternetMonitor.UI.Converters"
+        mc:Ignorable="d"
+        Title="{Binding L[AppTitle]}"
+        Height="750" Width="1200"
+        MinHeight="650" MinWidth="1000"
+        WindowStartupLocation="CenterScreen"
+        Background="#1E1E1E">
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:InverseBoolConverter x:Key="InverseBoolConverter"/>
+
+        <!-- Card Style -->
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="15"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <!-- Metric Label Style -->
+        <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+
+        <!-- Metric Value Style -->
+        <Style x:Key="MetricValueStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+
+        <!-- Info Icon Style -->
+        <Style x:Key="InfoIconStyle" TargetType="Border">
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="#555555"/>
+            <Setter Property="Cursor" Value="Help"/>
+            <Setter Property="Margin" Value="5,0,0,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#007ACC"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Tooltip Style -->
+        <Style x:Key="MetricTooltipStyle" TargetType="ToolTip">
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#007ACC"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="MaxWidth" Value="300"/>
+        </Style>
+
+        <!-- Button Style -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="#007ACC"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="5"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#005A9E"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Tab Style -->
+        <Style TargetType="TabItem">
+            <Setter Property="Background" Value="#2D2D2D"/>
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border" Background="{TemplateBinding Background}"
+                                CornerRadius="5,5,0,0" Margin="2,0,2,0">
+                            <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center"
+                                              HorizontalAlignment="Center"
+                                              ContentSource="Header"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#007ACC"/>
+                                <Setter Property="Foreground" Value="White"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#3D3D3D"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="#005A9E"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="5,5,5,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Connection Status Indicator -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="20" Height="20"
+                             Fill="{Binding ConnectionState, Converter={StaticResource StatusToColorConverter}}"
+                             Margin="0,0,10,0"/>
+                    <StackPanel>
+                        <TextBlock Text="{Binding L[ConnectionStatus]}" Style="{StaticResource MetricLabelStyle}"/>
+                        <TextBlock Text="{Binding ConnectionStatusText}"
+                                   FontSize="18" FontWeight="SemiBold" Foreground="White"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Last Event / Cache Status -->
+                <StackPanel Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding L[LastEvent]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                    <TextBlock Text="{Binding LastEventText}" Foreground="#AAAAAA" FontSize="13"/>
+                    <TextBlock Text="{Binding CacheCleanStatus}" Foreground="#E91E63" FontSize="11"
+                               HorizontalAlignment="Center" Margin="0,3,0,0"/>
+                </StackPanel>
+
+                <!-- Control Buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button Content="{Binding L[ClearCache]}"
+                            Command="{Binding CleanCacheCommand}"
+                            Background="#E91E63"
+                            Style="{StaticResource ModernButton}"
+                            Padding="15,10"
+                            Margin="0,0,5,0"
+                            IsEnabled="{Binding IsCleaningCache, Converter={StaticResource InverseBoolConverter}}"/>
+                    <Button Content="{Binding L[CSV]}"
+                            Command="{Binding ExportToCsvCommand}"
+                            Background="#555555"
+                            Style="{StaticResource ModernButton}"
+                            Padding="15,10"
+                            Margin="0,0,5,0"/>
+                    <Button Content="{Binding L[Report]}"
+                            Command="{Binding ExportReportCommand}"
+                            Background="#555555"
+                            Style="{StaticResource ModernButton}"
+                            Padding="15,10"
+                            Margin="0,0,5,0"/>
+                    <Button Content="{Binding L[Settings]}"
+                            Command="{Binding OpenSettingsCommand}"
+                            Background="#555555"
+                            Style="{StaticResource ModernButton}"
+                            Padding="15,10"
+                            Margin="0,0,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Tab Control -->
+        <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
+
+            <!-- Dashboard Tab -->
+            <TabItem Header="{Binding [Dashboard], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" FontSize="14" FontWeight="SemiBold">
+                <Grid Margin="0,10,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Metrics Cards -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Current Ping -->
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding L[CurrentPing]}" Style="{StaticResource MetricLabelStyle}"/>
+                                    <Border Style="{StaticResource InfoIconStyle}">
+                                        <Border.ToolTip>
+                                            <ToolTip Style="{StaticResource MetricTooltipStyle}">
+                                                <TextBlock Text="{Binding L[CurrentPingTooltip]}" TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                        <TextBlock Text="i" Foreground="White" FontSize="10"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding CurrentPing}" Style="{StaticResource MetricValueStyle}"/>
+                                    <TextBlock Text=" ms" Foreground="#888888" FontSize="14" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Average Ping -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding L[AveragePing]}" Style="{StaticResource MetricLabelStyle}"/>
+                                    <Border Style="{StaticResource InfoIconStyle}">
+                                        <Border.ToolTip>
+                                            <ToolTip Style="{StaticResource MetricTooltipStyle}">
+                                                <TextBlock Text="{Binding L[AveragePingTooltip]}" TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                        <TextBlock Text="i" Foreground="White" FontSize="10"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding AveragePing}" Style="{StaticResource MetricValueStyle}"/>
+                                    <TextBlock Text=" ms" Foreground="#888888" FontSize="14" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Jitter -->
+                        <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding L[Jitter]}" Style="{StaticResource MetricLabelStyle}"/>
+                                    <Border Style="{StaticResource InfoIconStyle}">
+                                        <Border.ToolTip>
+                                            <ToolTip Style="{StaticResource MetricTooltipStyle}">
+                                                <TextBlock Text="{Binding L[JitterTooltip]}" TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                        <TextBlock Text="i" Foreground="White" FontSize="10"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Jitter, StringFormat=F1}" Style="{StaticResource MetricValueStyle}"/>
+                                    <TextBlock Text=" ms" Foreground="#888888" FontSize="14" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Packet Loss -->
+                        <Border Grid.Column="3" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding L[PacketLoss]}" Style="{StaticResource MetricLabelStyle}"/>
+                                    <Border Style="{StaticResource InfoIconStyle}">
+                                        <Border.ToolTip>
+                                            <ToolTip Style="{StaticResource MetricTooltipStyle}">
+                                                <TextBlock Text="{Binding L[PacketLossTooltip]}" TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                        <TextBlock Text="i" Foreground="White" FontSize="10"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding PacketLoss, StringFormat=F1}" Style="{StaticResource MetricValueStyle}"
+                                               Foreground="{Binding PacketLoss, Converter={StaticResource StatusToColorConverter}}"/>
+                                    <TextBlock Text=" %" Foreground="#888888" FontSize="14" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Uptime -->
+                        <Border Grid.Column="4" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding L[Uptime]}" Style="{StaticResource MetricLabelStyle}"/>
+                                    <Border Style="{StaticResource InfoIconStyle}">
+                                        <Border.ToolTip>
+                                            <ToolTip Style="{StaticResource MetricTooltipStyle}">
+                                                <TextBlock Text="{Binding L[UptimeTooltip]}" TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                        <TextBlock Text="i" Foreground="White" FontSize="10"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <TextBlock Text="{Binding UptimeText}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#4CAF50" FontSize="20"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Uptime Percent -->
+                        <Border Grid.Column="5" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding L[UptimePercent]}" Style="{StaticResource MetricLabelStyle}"/>
+                                    <Border Style="{StaticResource InfoIconStyle}">
+                                        <Border.ToolTip>
+                                            <ToolTip Style="{StaticResource MetricTooltipStyle}">
+                                                <TextBlock Text="{Binding L[UptimePercentTooltip]}" TextWrapping="Wrap"/>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                        <TextBlock Text="i" Foreground="White" FontSize="10"
+                                                   FontWeight="Bold" HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding UptimePercent, StringFormat=F2}" Style="{StaticResource MetricValueStyle}"
+                                               Foreground="#4CAF50"/>
+                                    <TextBlock Text=" %" Foreground="#888888" FontSize="14" VerticalAlignment="Bottom" Margin="0,0,0,4"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Charts and History -->
+                    <Grid Grid.Row="1" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Charts -->
+                        <Grid Grid.Column="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Ping Chart -->
+                            <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="{Binding L[PingHistory]}" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                    <lvc:CartesianChart Grid.Row="1"
+                                                        Series="{Binding PingSeries}"
+                                                        XAxes="{Binding XAxes}"
+                                                        YAxes="{Binding PingYAxes}"
+                                                        TooltipPosition="Hidden"
+                                                        ZoomMode="X"/>
+                                </Grid>
+                            </Border>
+
+                            <!-- Packet Loss Chart -->
+                            <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="{Binding L[PacketLossHistory]}" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                    <lvc:CartesianChart Grid.Row="1"
+                                                        Series="{Binding PacketLossSeries}"
+                                                        XAxes="{Binding XAxes}"
+                                                        YAxes="{Binding PacketLossYAxes}"
+                                                        TooltipPosition="Hidden"
+                                                        ZoomMode="X"/>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Event History -->
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="{Binding L[EventHistory]}" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                    <Button Content="{Binding L[Clear]}" Command="{Binding ClearHistoryCommand}"
+                                            Background="Transparent" Foreground="#888888"
+                                            BorderThickness="0" FontSize="12" Margin="10,0,0,0" Cursor="Hand"/>
+                                </StackPanel>
+
+                                <ListBox Grid.Row="1"
+                                         ItemsSource="{Binding EventHistory}"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="#383838" CornerRadius="4" Padding="10" Margin="0,0,0,5">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Grid.Column="0" Text="{Binding TimeText}"
+                                                               Foreground="#888888" FontSize="11" Margin="0,0,10,0"/>
+                                                    <TextBlock Grid.Column="1" Text="{Binding Description}"
+                                                               Foreground="White" FontSize="12" TextWrapping="Wrap"/>
+                                                    <TextBlock Grid.Column="2" Text="{Binding DurationText}"
+                                                               Foreground="#888888" FontSize="11"/>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- Network Usage Tab -->
+            <TabItem Header="{Binding [NetworkUsage], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" FontSize="14" FontWeight="SemiBold">
+                <Grid Margin="5,10,5,5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Summary Cards -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding L[TotalDownload]}" Style="{StaticResource MetricLabelStyle}"/>
+                                <TextBlock Text="{Binding TotalDownloadSpeed}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#4CAF50" FontSize="20"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding L[TotalUpload]}" Style="{StaticResource MetricLabelStyle}"/>
+                                <TextBlock Text="{Binding TotalUploadSpeed}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#2196F3" FontSize="20"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding L[ActiveConnections]}" Style="{StaticResource MetricLabelStyle}"/>
+                                <TextBlock Text="{Binding ActiveConnectionCount}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#FF9800" FontSize="20"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="3" Style="{StaticResource CardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="{Binding L[MonitoredProcesses]}" Style="{StaticResource MetricLabelStyle}"/>
+                                <TextBlock Text="{Binding ProcessCount}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#9C27B0" FontSize="20"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Process List -->
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="5,10,5,5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBlock Text="{Binding L[ProcessBasedUsage]}" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                <Button Content="{Binding L[Refresh]}" Command="{Binding RefreshNetworkUsageCommand}"
+                                        Background="#555555" Foreground="White"
+                                        BorderThickness="0" FontSize="12" Padding="10,3" Margin="15,0,0,0" Cursor="Hand"/>
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding NetworkProcesses}"
+                                      AutoGenerateColumns="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      RowBackground="#2D2D2D"
+                                      AlternatingRowBackground="#353535"
+                                      Foreground="White"
+                                      GridLinesVisibility="None"
+                                      HeadersVisibility="Column"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      CanUserReorderColumns="False">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                        <Setter Property="Foreground" Value="#AAAAAA"/>
+                                        <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#007ACC"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{Binding [ProcessName], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding ProcessName}" Width="200"/>
+                                    <DataGridTextColumn Header="{Binding [PID], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding ProcessId}" Width="70"/>
+                                    <DataGridTextColumn Header="{Binding [Download], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding DownloadSpeed}" Width="120">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#4CAF50"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="{Binding [Upload], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding UploadSpeed}" Width="120">
+                                        <DataGridTextColumn.ElementStyle>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="#2196F3"/>
+                                            </Style>
+                                        </DataGridTextColumn.ElementStyle>
+                                    </DataGridTextColumn>
+                                    <DataGridTextColumn Header="{Binding [TotalDownloaded], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding TotalDownloaded}" Width="120"/>
+                                    <DataGridTextColumn Header="{Binding [TotalUploaded], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding TotalUploaded}" Width="120"/>
+                                    <DataGridTextColumn Header="{Binding [Connections], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding ConnectionCount}" Width="80"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Speed Test Tab -->
+            <TabItem Header="{Binding [SpeedTest], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" FontSize="14" FontWeight="SemiBold">
+                <Grid Margin="5,10,5,5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Speed Test Controls -->
+                    <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Download Speed -->
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[DownloadSpeed]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding DownloadSpeedText}" FontSize="42" FontWeight="Bold"
+                                           Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Upload Speed -->
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[UploadSpeed]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding UploadSpeedText}" FontSize="42" FontWeight="Bold"
+                                           Foreground="#2196F3" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Server Selection and Start Button -->
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="30,0">
+                                <TextBlock Text="{Binding L[TestServer]}" Foreground="#888888" FontSize="11" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="ServerComboBox"
+                                          ItemsSource="{Binding AvailableServers}"
+                                          SelectedItem="{Binding SelectedSpeedTestServer, Mode=TwoWay}"
+                                          Width="200" Height="32" Margin="0,0,0,10">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" Foreground="White"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                    <ComboBox.Style>
+                                        <Style TargetType="ComboBox">
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Background" Value="#3D3D3D"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ComboBox">
+                                                        <Grid>
+                                                            <Border x:Name="Border" Background="#3D3D3D" BorderBrush="#555555"
+                                                                    BorderThickness="1" CornerRadius="4"/>
+                                                            <ToggleButton x:Name="ToggleButton"
+                                                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                          Focusable="False" ClickMode="Press">
+                                                                <ToggleButton.Template>
+                                                                    <ControlTemplate TargetType="ToggleButton">
+                                                                        <Border Background="Transparent">
+                                                                            <Grid>
+                                                                                <Grid.ColumnDefinitions>
+                                                                                    <ColumnDefinition Width="*"/>
+                                                                                    <ColumnDefinition Width="25"/>
+                                                                                </Grid.ColumnDefinitions>
+                                                                                <Path Grid.Column="1" Data="M0,0 L4,4 L8,0"
+                                                                                      Stroke="White" StrokeThickness="1.5"
+                                                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                            </Grid>
+                                                                        </Border>
+                                                                    </ControlTemplate>
+                                                                </ToggleButton.Template>
+                                                            </ToggleButton>
+                                                            <TextBlock Text="{Binding SelectedItem.DisplayName, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                       Foreground="White" FontSize="12"
+                                                                       Margin="10,0,25,0"
+                                                                       VerticalAlignment="Center"
+                                                                       HorizontalAlignment="Left"
+                                                                       IsHitTestVisible="False"/>
+                                                            <Popup x:Name="Popup" Placement="Bottom"
+                                                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                                                   AllowsTransparency="True" Focusable="False"
+                                                                   PopupAnimation="Slide">
+                                                                <Border Background="#2D2D2D" CornerRadius="4"
+                                                                        BorderThickness="1" BorderBrush="#555555"
+                                                                        MinWidth="{TemplateBinding ActualWidth}">
+                                                                    <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                                                                        <StackPanel IsItemsHost="True"/>
+                                                                    </ScrollViewer>
+                                                                </Border>
+                                                            </Popup>
+                                                        </Grid>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Border" Property="BorderBrush" Value="#007ACC"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ComboBox.Style>
+                                    <ComboBox.ItemContainerStyle>
+                                        <Style TargetType="ComboBoxItem">
+                                            <Setter Property="Background" Value="#2D2D2D"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Padding" Value="10,6"/>
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="ComboBoxItem">
+                                                        <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                            <ContentPresenter/>
+                                                        </Border>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Border" Property="Background" Value="#007ACC"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsSelected" Value="True">
+                                                                <Setter TargetName="Border" Property="Background" Value="#005A9E"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </ComboBox.ItemContainerStyle>
+                                </ComboBox>
+                                <Button Content="{Binding SpeedTestButtonText}"
+                                        Command="{Binding RunSpeedTestCommand}"
+                                        Style="{StaticResource ModernButton}"
+                                        Width="180" Height="50"
+                                        FontSize="16" FontWeight="Bold"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Progress Section -->
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="5,10,5,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="{Binding SpeedTestStatus}" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="{Binding L[DownloadServer]}" Foreground="#666666" FontSize="11"/>
+                                    <TextBlock Text=": " Foreground="#666666" FontSize="11"/>
+                                    <TextBlock Text="{Binding DownloadServerInfo}" Foreground="#4CAF50" FontSize="11"/>
+                                    <TextBlock Text="  |  " Foreground="#666666" FontSize="11"/>
+                                    <TextBlock Text="{Binding L[UploadServer]}" Foreground="#666666" FontSize="11"/>
+                                    <TextBlock Text=": " Foreground="#666666" FontSize="11"/>
+                                    <TextBlock Text="{Binding UploadServerInfo}" Foreground="#2196F3" FontSize="11"/>
+                                </StackPanel>
+                                <ProgressBar Value="{Binding SpeedTestProgress}"
+                                             Minimum="0" Maximum="100" Height="25"
+                                             Background="#1E1E1E" Foreground="#007ACC"/>
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="20,0,0,0">
+                                <Run Text="{Binding SpeedTestProgress}" FontSize="28" FontWeight="Bold" Foreground="White"/>
+                                <Run Text="%" FontSize="18" Foreground="#888888"/>
+                            </TextBlock>
+                        </Grid>
+                    </Border>
+
+                    <!-- Speed Graphs -->
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="5,10,2.5,5">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Background="#4CAF50" CornerRadius="3" Padding="8,3" Margin="0,0,10,0">
+                                        <TextBlock Text="{Binding L[Download]}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding L[RealTimeSpeed]}" Foreground="#666666" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <lvc:CartesianChart Grid.Row="1"
+                                                    Series="{Binding DownloadSpeedSeries}"
+                                                    XAxes="{Binding SpeedTestXAxes}"
+                                                    YAxes="{Binding DownloadYAxes}"
+                                                    TooltipPosition="Hidden"
+                                                    ZoomMode="None"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="2.5,10,5,5">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                    <Border Background="#2196F3" CornerRadius="3" Padding="8,3" Margin="0,0,10,0">
+                                        <TextBlock Text="{Binding L[Upload]}" Foreground="White" FontSize="11" FontWeight="Bold"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding L[RealTimeSpeed]}" Foreground="#666666" FontSize="12" VerticalAlignment="Center"/>
+                                </StackPanel>
+
+                                <lvc:CartesianChart Grid.Row="1"
+                                                    Series="{Binding UploadSpeedSeries}"
+                                                    XAxes="{Binding SpeedTestXAxes}"
+                                                    YAxes="{Binding UploadYAxes}"
+                                                    TooltipPosition="Hidden"
+                                                    ZoomMode="None"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- Website Monitor Tab -->
+            <TabItem Header="{Binding [Websites], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" FontSize="14" FontWeight="SemiBold">
+                <Grid Margin="5,10,5,5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[MonitoredSites]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding WebsiteCount}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#9C27B0" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[Online]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding WebsitesOnlineCount}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#4CAF50" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[Offline]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding WebsitesOfflineCount}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#F44336" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="3" Content="{Binding L[Refresh]}"
+                                    Command="{Binding RefreshWebsitesCommand}"
+                                    Style="{StaticResource ModernButton}"
+                                    Background="#555555" Margin="10,0"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="5,10,5,5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="{Binding L[WebsiteStatus]}" Foreground="White" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding Websites}"
+                                      AutoGenerateColumns="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      RowBackground="#2D2D2D"
+                                      AlternatingRowBackground="#353535"
+                                      Foreground="White"
+                                      GridLinesVisibility="None"
+                                      HeadersVisibility="Column"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      CanUserAddRows="False">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                        <Setter Property="Foreground" Value="#AAAAAA"/>
+                                        <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#007ACC"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="{Binding [SiteName], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding Name}" Width="150"/>
+                                    <DataGridTextColumn Header="{Binding [URL], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding Url}" Width="280"/>
+                                    <DataGridTemplateColumn Header="{Binding [Status], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Status}" Foreground="{Binding StatusColor}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{Binding [ResponseTime], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding ResponseTime}" Width="100"/>
+                                    <DataGridTextColumn Header="{Binding [LastCheck], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding LastCheckText}" Width="100"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- Network Devices Tab -->
+            <TabItem Header="{Binding [NetworkDevices], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" FontSize="14" FontWeight="SemiBold">
+                <Grid Margin="5,10,5,5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource CardStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[LocalIP]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding LocalIpAddress}" Style="{StaticResource MetricValueStyle}"
+                                           FontSize="16" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[Gateway]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding GatewayAddress}" Style="{StaticResource MetricValueStyle}"
+                                           FontSize="16" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[NetworkName]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding NetworkName}" Style="{StaticResource MetricValueStyle}"
+                                           FontSize="16" HorizontalAlignment="Center"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="3" HorizontalAlignment="Center">
+                                <TextBlock Text="{Binding L[FoundDevices]}" Style="{StaticResource MetricLabelStyle}" HorizontalAlignment="Center"/>
+                                <TextBlock Text="{Binding NetworkDeviceCount}" Style="{StaticResource MetricValueStyle}"
+                                           Foreground="#FF9800" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="5,10,5,5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Button Grid.Column="0" Content="{Binding ScanButtonText}"
+                                    Command="{Binding ScanNetworkCommand}"
+                                    Style="{StaticResource ModernButton}"
+                                    Width="140"/>
+
+                            <ProgressBar Grid.Column="1" Value="{Binding NetworkScanProgress}"
+                                         Minimum="0" Maximum="100" Height="20" Margin="20,0"
+                                         Background="#1E1E1E" Foreground="#FF9800"/>
+
+                            <TextBlock Grid.Column="2" Text="{Binding NetworkScanStatus}" Foreground="#AAAAAA"
+                                       VerticalAlignment="Center" FontSize="13"/>
+                        </Grid>
+                    </Border>
+
+                    <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="5,10,5,5">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBlock Text="{Binding L[DevicesOnNetwork]}" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding L[DoubleClickForDetails]}" Foreground="#666666" FontSize="11" VerticalAlignment="Bottom" Margin="5,0,0,1"/>
+                            </StackPanel>
+
+                            <DataGrid Grid.Row="1"
+                                      ItemsSource="{Binding NetworkDevices}"
+                                      SelectedItem="{Binding SelectedDevice}"
+                                      AutoGenerateColumns="False"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      RowBackground="#2D2D2D"
+                                      AlternatingRowBackground="#353535"
+                                      Foreground="White"
+                                      GridLinesVisibility="None"
+                                      HeadersVisibility="Column"
+                                      IsReadOnly="True"
+                                      SelectionMode="Single"
+                                      CanUserAddRows="False"
+                                      MouseDoubleClick="DeviceGrid_MouseDoubleClick">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#1E1E1E"/>
+                                        <Setter Property="Foreground" Value="#AAAAAA"/>
+                                        <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.CellStyle>
+                                    <Style TargetType="DataGridCell">
+                                        <Setter Property="Padding" Value="10,8"/>
+                                        <Setter Property="BorderThickness" Value="0"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="DataGridCell">
+                                                    <Border Padding="{TemplateBinding Padding}" Background="{TemplateBinding Background}">
+                                                        <ContentPresenter VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                        <Style.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter Property="Background" Value="#007ACC"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </DataGrid.CellStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="{Binding [Status], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Width="110">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding StatusText}" Foreground="{Binding StatusColor}"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                    <DataGridTextColumn Header="{Binding [DeviceType], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding DeviceType}" Width="120"/>
+                                    <DataGridTextColumn Header="{Binding [IPAddress], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding IpAddress}" Width="120"/>
+                                    <DataGridTextColumn Header="{Binding [Hostname], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding DisplayName}" Width="150"/>
+                                    <DataGridTextColumn Header="{Binding [Manufacturer], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding Vendor}" Width="100"/>
+                                    <DataGridTextColumn Header="{Binding [Ping], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding PingText}" Width="70"/>
+                                    <DataGridTextColumn Header="{Binding [Connections], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Binding="{Binding ConnectionsText}" Width="70"/>
+                                    <DataGridTemplateColumn Header="{Binding [Action], Source={x:Static vm:MainViewModel.Localization}, Mode=OneWay}" Width="120">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="{Binding BlockButtonText}"
+                                                        Command="{Binding DataContext.BlockDeviceCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"
+                                                        Visibility="{Binding CanBlock, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                        Background="#F44336" Foreground="White"
+                                                        Padding="8,3" FontSize="11"
+                                                        BorderThickness="0" Cursor="Hand">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsBlocked}" Value="True">
+                                                                    <Setter Property="Background" Value="#4CAF50"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <Button.Template>
+                                                        <ControlTemplate TargetType="Button">
+                                                            <Border Background="{TemplateBinding Background}" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                            </Border>
+                                                        </ControlTemplate>
+                                                    </Button.Template>
+                                                </Button>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" Background="#252525" CornerRadius="5" Padding="10,5" Margin="5,10,5,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" Foreground="#888888" VerticalAlignment="Center"/>
+
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" Margin="20,0">
+                    <Run Text="{Binding L[TotalPings], Mode=OneWay}" Foreground="#888888"/>
+                    <Run Text=": " Foreground="#888888"/>
+                    <Run Text="{Binding TotalPings}" Foreground="White"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="2" VerticalAlignment="Center" Margin="20,0">
+                    <Run Text="{Binding L[Failed], Mode=OneWay}" Foreground="#888888"/>
+                    <Run Text=": " Foreground="#888888"/>
+                    <Run Text="{Binding FailedPings}" Foreground="#F44336"/>
+                </TextBlock>
+
+                <TextBlock Grid.Column="3" VerticalAlignment="Center">
+                    <Run Text="{Binding L[Target], Mode=OneWay}" Foreground="#888888"/>
+                    <Run Text=": " Foreground="#888888"/>
+                    <Run Text="8.8.8.8" Foreground="White"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

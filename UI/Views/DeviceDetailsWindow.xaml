@@ -1,0 +1,113 @@
+<Window x:Class="InternetMonitor.UI.Views.DeviceDetailsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cihaz Detaylari"
+        Height="500" Width="450"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#1E1E1E">
+
+    <Window.Resources>
+        <Style x:Key="LabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#888888"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="0,8,0,2"/>
+        </Style>
+        <Style x:Key="ValueStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock x:Name="DeviceTypeText" FontSize="32" HorizontalAlignment="Center"/>
+            <TextBlock x:Name="DeviceNameText" Foreground="White" FontSize="20" FontWeight="Bold"
+                       HorizontalAlignment="Center" Margin="0,5,0,0"/>
+            <Border x:Name="StatusBorder" CornerRadius="10" Padding="12,4"
+                    HorizontalAlignment="Center" Margin="0,10,0,0">
+                <TextBlock x:Name="StatusText" FontSize="12" FontWeight="SemiBold"/>
+            </Border>
+        </StackPanel>
+
+        <!-- Details -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Border Background="#2D2D2D" CornerRadius="8" Padding="15">
+                <StackPanel>
+                    <!-- IP Address -->
+                    <TextBlock Text="IP Adresi" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="IpAddressText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- MAC Address -->
+                    <TextBlock Text="MAC Adresi" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="MacAddressText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- Hostname -->
+                    <TextBlock Text="Hostname" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="HostnameText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- Vendor -->
+                    <TextBlock Text="Uretici" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="VendorText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- Ping -->
+                    <TextBlock Text="Ping Suresi" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="PingText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- First Seen -->
+                    <TextBlock Text="Ilk Gorulme" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="FirstSeenText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- Last Seen -->
+                    <TextBlock Text="Son Gorulme" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="LastSeenText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- Online Duration -->
+                    <TextBlock Text="Cevrimici Sure" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="OnlineDurationText" Style="{StaticResource ValueStyle}"/>
+
+                    <!-- Connections -->
+                    <TextBlock Text="Aktif Baglanti Sayisi" Style="{StaticResource LabelStyle}"/>
+                    <TextBlock x:Name="ConnectionsText" Style="{StaticResource ValueStyle}"/>
+                </StackPanel>
+            </Border>
+        </ScrollViewer>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,15,0,0">
+            <Button x:Name="BlockButton" Content="Baglantıyı Kes"
+                    Click="BlockButton_Click"
+                    Background="#F44336" Foreground="White"
+                    Padding="20,10" FontSize="14" FontWeight="SemiBold"
+                    BorderThickness="0" Cursor="Hand" Margin="0,0,10,0">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+            <Button Content="Kapat" Click="CloseButton_Click"
+                    Background="#555555" Foreground="White"
+                    Padding="20,10" FontSize="14" FontWeight="SemiBold"
+                    BorderThickness="0" Cursor="Hand">
+                <Button.Template>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Button.Template>
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>
